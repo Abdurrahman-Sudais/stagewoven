@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --color-ink-950: #0a0908;
+  --color-ink-900: #100e0c;
+  --color-ink-850: #151210;
+  --color-ink-800: #1b1815;
+  --color-ink-750: #221e1a;
+  --color-ink-700: #2b2621;
+  --color-ink-600: #3a332c;
+
+  --color-ivory-50: #f6f1e7;
+  --color-ivory-100: #ece5d7;
+  --color-ivory-200: #d9d0bf;
+  --color-ivory-300: #bfb5a3;
+  --color-ivory-400: #a39886;
+  --color-ivory-500: #847a6b;
+  --color-ivory-600: #625a4f;
+
+  --color-brass-200: #f6d9a8;
+  --color-brass-300: #f0c27c;
+  --color-brass-400: #e6a23f;
+  --color-brass-500: #c7852b;
+  --color-brass-600: #9a6420;
+
+  --color-curtain-300: #e48a7f;
+  --color-curtain-400: #d2594c;
+  --color-curtain-500: #b13a2f;
+  --color-curtain-700: #5c1d17;
+
+  --color-sage-300: #a9cbb2;
+  --color-sage-400: #84ad90;
+  --color-steel-300: #a9c4dc;
+  --color-steel-400: #7ea3c4;
+  --color-mauve-300: #cdb7dc;
+  --color-mauve-400: #ab90c2;
+
+  /* Department identity colours, validated for CVD separation on ink-850 */
+  --color-dept-lx: #c58020;
+  --color-dept-snd: #4a95e0;
+  --color-dept-sc: #c9609a;
+
+  --animate-fade-up: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-fade-in: fade-in 0.35s ease-out both;
+  --animate-scale-in: scale-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-slide-in-right: slide-in-right 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+  --animate-flag: flag 2.4s ease-in-out infinite;
+
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(0.97) translateY(6px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  @keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes flag {
+    0%, 100% { box-shadow: 0 0 0 0 rgb(210 89 76 / 0); }
+    50% { box-shadow: 0 0 0 4px rgb(210 89 76 / 0.18); }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply bg-ink-950 font-sans text-ivory-100;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: rgb(230 162 63 / 0.35);
+    color: var(--color-ivory-50);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-brass-400);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  h1, h2, h3, h4 {
+    text-wrap: balance;
+  }
+  p {
+    text-wrap: pretty;
+  }
+}
+
+@layer components {
+  .eyebrow {
+    @apply font-mono text-[0.7rem] font-medium tracking-[0.18em] text-brass-400 uppercase;
+  }
+  .panel {
+    @apply rounded-xl border border-ivory-50/[0.08] bg-ink-850/80 shadow-[0_1px_0_0_rgb(246_241_231/0.04)_inset,0_24px_48px_-24px_rgb(0_0_0/0.6)];
+  }
+  .hairline {
+    @apply border-ivory-50/[0.08];
+  }
+  .stage-light {
+    background:
+      radial-gradient(60% 50% at 50% -10%, rgb(230 162 63 / 0.13), transparent 70%),
+      radial-gradient(40% 40% at 85% 10%, rgb(177 58 47 / 0.08), transparent 70%);
+  }
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .input {
+    @apply w-full rounded-lg border border-ivory-50/10 bg-ink-900 px-3.5 py-2.5 text-sm text-ivory-50 placeholder:text-ivory-600 transition-colors outline-none hover:border-ivory-50/20 focus:border-brass-400/70 focus:ring-2 focus:ring-brass-400/20;
+  }
+  .input[aria-invalid="true"] {
+    @apply border-curtain-400/70 focus:ring-curtain-400/20;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-ink-600) transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

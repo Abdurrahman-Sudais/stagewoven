@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(python3 -)",
+      "Bash(mkdir -p views)",
+      "Bash(node scripts/validate_palette.js \"#e6a23f,#7ea3c4,#ab90c2\" --mode dark --surface \"#151210\")",
+      "Bash(sed -i '' 's/md:grid-cols-\\\\[1.05fr_1fr\\\\]/md:grid-cols-[minmax\\(0,1fr\\)_minmax\\(0,1fr\\)]/' components/marketing/HeroPreview.tsx)",
+      "Bash(sed -i '' 's/lg:grid-cols-\\\\[0.9fr_1.1fr\\\\] lg:gap-12/lg:grid-cols-[minmax\\(0,0.85fr\\)_minmax\\(0,1.15fr\\)] lg:gap-12/' pages/Home.tsx)",
+      "Bash(npm run *)"
+    ]
+  }
+}
