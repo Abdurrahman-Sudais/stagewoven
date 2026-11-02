@@ -1,6 +1,7 @@
 import { Mail } from 'lucide-react'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
-import { company } from '../data/site'
+import { FOUNDERS, company } from '../data/site'
+import { FoundersGrid, RoadmapSection } from './HomeSections'
 import { PageHero, Section, SectionHeader } from '../components/ui/Section'
 import { StageScene } from '../components/ui/StageScene'
 import { CtaBand } from '../components/marketing/Blocks'
@@ -13,7 +14,7 @@ const principles = [
 ]
 
 export default function About() {
-  useDocumentMeta('About', `Stagewoven was founded by ${company.founder} to keep production paperwork in step with the show as scripts change.`, '/about')
+  useDocumentMeta('About & team', `Stagewoven was founded by ${FOUNDERS.map((f) => f.name).join(' and ')} to keep production paperwork in step with the show as scripts change.`, '/about')
 
   return (
     <>
@@ -42,15 +43,20 @@ export default function About() {
                 that is not.
               </p>
             </div>
-            <div className="mt-10 rounded-xl border hairline bg-ink-900/60 p-6">
-              <p className="eyebrow !text-ivory-500">Founder</p>
-              <p className="mt-2 font-serif text-2xl text-ivory-50">{company.founder}</p>
-              <a href={`mailto:${company.email}`} className="mt-3 inline-flex items-center gap-2 text-sm text-ivory-300 hover:text-brass-300">
+            <blockquote className="reveal mt-10 rounded-xl border hairline bg-ink-900/60 p-6">
+              <p className="eyebrow">Our mission</p>
+              <p className="mt-2 font-serif text-2xl leading-snug text-ivory-50">Keep every cue in step with the show — however many times the script changes.</p>
+              <a href={`mailto:${company.email}`} className="mt-4 inline-flex items-center gap-2 text-sm text-ivory-300 hover:text-brass-300">
                 <Mail className="h-4 w-4" aria-hidden="true" /> {company.email}
               </a>
-            </div>
+            </blockquote>
           </div>
         </div>
+      </Section>
+
+      <Section id="team" labelledBy="team-title" className="border-t hairline">
+        <SectionHeader id="team-title" eyebrow="Founding team" title="The people behind Stagewoven" />
+        <div className="mt-10"><FoundersGrid /></div>
       </Section>
 
       <Section labelledBy="principles-title" className="border-t hairline bg-ink-900/30">
@@ -66,6 +72,7 @@ export default function About() {
         </ol>
       </Section>
 
+      <RoadmapSection />
       <CtaBand />
     </>
   )

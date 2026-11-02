@@ -13,7 +13,7 @@ const [original, revised] = revisions
 const diffRows = diffRevisions(original, revised)
 
 export default function Scripts() {
-  const { state, dispatch } = useWorkspace()
+  const { state, dispatch, can } = useWorkspace()
   const [params, setParams] = useSearchParams()
   const [revId, setRevId] = useState(revised.id)
   const [sceneId, setSceneId] = useState('s2')
@@ -51,7 +51,7 @@ export default function Scripts() {
         title="Scripts"
         description="Rehearsal drafts for The Last Train. Lines keep stable references across drafts, so cues can be checked when the words change."
         actions={
-          <Button onClick={runComparison} disabled={phase === 'running'}>
+          <Button onClick={runComparison} disabled={!can('compare') || phase === 'running'} title={can('compare') ? undefined : 'Your role cannot run a revision comparison'}>
             {phase === 'running' ? <Loader2 className="h-4 w-4 animate-spin" /> : <GitCompareArrows className="h-4 w-4" />}
             {phase === 'running' ? 'Comparing…' : phase === 'done' ? 'Compare again' : 'Compare Revisions'}
           </Button>

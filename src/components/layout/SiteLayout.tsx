@@ -1,8 +1,13 @@
-import { Outlet } from 'react-router-dom'
+import { Suspense } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
+import { useRevealOnScroll } from '../../lib/motion'
+import { PageLoader } from '../ui/States'
 import { Navbar } from './Navbar'
 import { Footer } from './Footer'
 
 export function SiteLayout() {
+  const { pathname } = useLocation()
+  useRevealOnScroll(pathname)
   return (
     <div className="flex min-h-dvh flex-col">
       <a
@@ -13,7 +18,9 @@ export function SiteLayout() {
       </a>
       <Navbar />
       <main id="main" className="flex-1">
-        <Outlet />
+        <Suspense fallback={<PageLoader label="Loading" />}>
+          <Outlet />
+        </Suspense>
       </main>
       <Footer />
     </div>

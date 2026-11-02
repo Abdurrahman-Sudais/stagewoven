@@ -15,7 +15,7 @@ const allLines = new Map(revisions.flatMap((r) => r.lines).map((l) => [l.id, l])
 const priorityRank: Record<Priority, number> = { High: 0, Medium: 1, Low: 2 }
 
 export default function ReviewQueue() {
-  const { state, dispatch } = useWorkspace()
+  const { state, dispatch, can } = useWorkspace()
   const { openEditor, toast } = useWorkspaceUi()
   const [params, setParams] = useSearchParams()
   const priority = params.get('priority') ?? ''
@@ -162,7 +162,7 @@ export default function ReviewQueue() {
                   <Button
                     size="sm"
                     variant="secondary"
-                    disabled={!!alreadyMoved || selected.status === 'Resolved'}
+                    disabled={!can('apply') || !!alreadyMoved || selected.status === 'Resolved'}
                     onClick={() => {
                       dispatch({ type: 'APPLY_SUGGESTION', reviewId: selected.id })
                       toast(`${cue.id} now triggers on ${suggested.id}.`)
@@ -177,7 +177,8 @@ export default function ReviewQueue() {
                 <label className="block">
                   <span className="mb-1.5 block text-xs text-ivory-400">Assigned to</span>
                   <Select
-                    className="w-full"
+                    className="w-full disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!can('assign')}
                     value={selected.assigneeId ?? ''}
                     onChange={(e) => {
                       if (!e.target.value) return
@@ -193,7 +194,7 @@ export default function ReviewQueue() {
                     ))}
                   </Select>
                 </label>
-                <Button variant="secondary" size="sm" className="h-9" onClick={() => openEditor(cue)}>
+                <Button variant="secondary" size="sm" className="h-9" disabled={!can('cues')} onClick={() => openEditor(cue)}>
                   <Pencil className="h-3.5 w-3.5" /> Edit trigger
                 </Button>
               </div>
@@ -202,7 +203,7 @@ export default function ReviewQueue() {
                 {selected.status === 'Resolved' ? (
                   <>
                     <p className="mr-auto self-center text-sm text-sage-300">{selected.resolution}</p>
-                    <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'REOPEN', reviewId: selected.id })}>
+                    <Button variant="ghost" size="sm" disabled={!can('review')} onClick={() => dispatch({ type: 'REOPEN', reviewId: selected.id })}>
                       <RotateCcw className="h-3.5 w-3.5" /> Reopen
                     </Button>
                   </>
@@ -210,6 +211,7 @@ export default function ReviewQueue() {
                   <>
                     <Button
                       variant="secondary"
+                      disabled={!can('review')}
                       onClick={() => {
                         dispatch({ type: 'MARK_REVIEWED', reviewId: selected.id })
                         toast(`${cue.id} marked as reviewed.`)
@@ -218,6 +220,8 @@ export default function ReviewQueue() {
                       <CheckCheck className="h-4 w-4" /> Mark as reviewed
                     </Button>
                     <Button
+                      disabled={!can('approve')}
+                      title={can('approve') ? undefined : 'Only the production stage manager can approve revised cues'}
                       onClick={() => {
                         dispatch({ type: 'APPROVE', reviewId: selected.id })
                         toast(`Revised ${cue.id} approved.`)

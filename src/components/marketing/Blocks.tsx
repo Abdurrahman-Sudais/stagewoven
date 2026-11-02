@@ -45,7 +45,7 @@ export function ProcessSteps({ compact }: { compact?: boolean }) {
 
 export function FeatureCard({ icon, title, children, tag }: { icon: ReactNode; title: string; children: ReactNode; tag?: ReactNode }) {
   return (
-    <div className="group relative rounded-2xl border hairline bg-ink-900/70 p-7 transition-all duration-300 hover:-translate-y-0.5 hover:border-ivory-50/15 hover:bg-ink-850">
+    <div className="reveal spot group relative rounded-2xl border hairline bg-ink-900/70 p-7 transition-all duration-300 hover:-translate-y-1 hover:border-ivory-50/15 hover:bg-ink-850">
       <div className="flex items-start justify-between gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-lg border hairline bg-ink-800 text-brass-300">{icon}</div>
         {tag}
@@ -61,7 +61,8 @@ export function CtaBand({ title = 'Make every revision easier to manage.', body 
     <section aria-labelledby="cta-title" className="relative overflow-hidden border-t hairline">
       <div className="absolute inset-0 bg-[radial-gradient(45%_70%_at_50%_100%,rgb(230_162_63/0.16),transparent_70%)]" aria-hidden="true" />
       <div className="absolute inset-x-0 bottom-0 mx-auto h-px max-w-3xl bg-gradient-to-r from-transparent via-brass-400/50 to-transparent" aria-hidden="true" />
-      <Container className="relative py-24 text-center sm:py-32">
+      <div className="hero-glow pointer-events-none absolute left-1/2 top-1/2 h-72 w-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brass-400/10 blur-3xl" aria-hidden="true" />
+      <Container className="reveal relative py-24 text-center sm:py-32">
         <p className="eyebrow">Ready when the next draft is</p>
         <h2 id="cta-title" className="mx-auto mt-5 max-w-3xl font-serif text-4xl leading-[1.05] font-light tracking-tight text-ivory-50 sm:text-6xl">
           {title}
@@ -70,11 +71,11 @@ export function CtaBand({ title = 'Make every revision easier to manage.', body 
           {body ?? 'Walk through a real revision on “The Last Train”, or talk to us about your next production.'}
         </p>
         <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <ButtonLink to="/workspace" size="lg">
-            Explore the Workspace <ArrowRight className="h-4 w-4" />
+          <ButtonLink to="/contact?type=demo" size="lg">
+            Request early access <ArrowRight className="h-4 w-4" />
           </ButtonLink>
-          <ButtonLink to="/contact?type=demo" variant="secondary" size="lg">
-            Request a guided demo
+          <ButtonLink to="/workspace" variant="secondary" size="lg">
+            Explore the live demo
           </ButtonLink>
         </div>
       </Container>

@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom'
 import { CalendarClock, CheckCircle2, Loader2, Mail, MessageSquare } from 'lucide-react'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { cn } from '../lib/cn'
-import { company } from '../data/site'
+import { FOUNDERS, company } from '../data/site'
+import { hubspotConfig, leadPayload } from '../lib/lead'
 import { pricingTiers } from '../data/pricing'
 import { Button } from '../components/ui/Button'
 import { Field } from '../components/ui/Field'
@@ -31,6 +32,8 @@ function validate(type: FormType, v: Values): Errors {
   return e
 }
 
+const ENQUIRIES_KEY = 'stagewoven-enquiries'
+
 export default function Contact() {
   const [params, setParams] = useSearchParams()
   const type: FormType = params.get('type') === 'demo' ? 'demo' : 'general'
@@ -38,6 +41,13 @@ export default function Contact() {
   const [values, setValues] = useState<Values>({ name: '', email: '', organisation: '', role: '', plan: planParam, productions: '', message: '' })
   const [errors, setErrors] = useState<Errors>({})
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+  const [consent, setConsent] = useState(false)
+  const [consentError, setConsentError] = useState('')
+  const [marketing, setMarketing] = useState(false)
+  const [honeypot, setHoneypot] = useState('')
+  const [sentVia, setSentVia] = useState<'hubspot' | 'local'>('local')
+  const hubspot = hubspotConfig()
+  const mailto = `mailto:${company.email}?subject=${encodeURIComponent(`Stagewoven ${type === 'demo' ? 'demo request' : 'enquiry'}${values.organisation ? ` — ${values.organisation}` : ''}`)}&body=${encodeURIComponent(`${values.message}\n\nName: ${values.name}\nOrganisation: ${values.organisation}\nRole: ${values.role}\nProductions per year: ${values.productions}\nPlan: ${values.plan}`)}`
 
   useDocumentMeta(type === 'demo' ? 'Request a demo' : 'Contact', 'Contact Stagewoven or request a guided demo of the production cue planning workspace.', '/contact')
 
@@ -54,18 +64,39 @@ export default function Contact() {
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
+    if (honeypot) return // bots fill hidden fields
     const found = validate(type, values)
     setErrors(found)
+    setConsentError(consent ? '' : 'Please confirm we may contact you about this request.')
     const first = Object.keys(found)[0]
     if (first) {
       document.getElementById(`f-${first}`)?.focus()
       return
     }
+    if (!consent) {
+      document.getElementById('f-consent')?.focus()
+      return
+    }
+    if (!hubspot) {
+      try {
+        const prev = JSON.parse(localStorage.getItem(ENQUIRIES_KEY) ?? '[]') as unknown[]
+        localStorage.setItem(ENQUIRIES_KEY, JSON.stringify([...prev, { ...values, type, marketing, at: new Date().toISOString() }]))
+      } catch {
+        /* storage unavailable: the email link still works */
+      }
+      setSentVia('local')
+      setStatus('success')
+      return
+    }
     setStatus('submitting')
     try {
-      // No form backend is connected; simulate a short round trip.
-      await new Promise((r) => setTimeout(r, 900))
-      if (!navigator.onLine) throw new Error('offline')
+      const r = await fetch(`https://api.hsforms.com/submissions/v3/integration/submit/${encodeURIComponent(hubspot.portalId)}/${encodeURIComponent(hubspot.formGuid)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(leadPayload({ ...values, enquiryType: type, marketing }, { pageUri: location.href.split('#')[0] ?? location.href, pageName: document.title }, hubspot)),
+      })
+      if (!r.ok) throw new Error(String(r.status))
+      setSentVia('hubspot')
       setStatus('success')
     } catch {
       setStatus('error')
@@ -85,7 +116,7 @@ export default function Contact() {
   return (
     <>
       <PageHero
-        eyebrow="Contact"
+        eyebrow="Early access"
         title={type === 'demo' ? 'See Stagewoven with your own script.' : 'Talk to the Stagewoven team.'}
         intro={
           type === 'demo'
@@ -121,14 +152,14 @@ export default function Contact() {
               <div role="status" className="animate-scale-in py-10 text-center">
                 <CheckCircle2 className="mx-auto h-10 w-10 text-sage-400" aria-hidden="true" />
                 <p className="mt-5 font-serif text-3xl text-ivory-50">Thank you, {values.name.split(' ')[0]}.</p>
-                <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ivory-300">
-                  Your {type === 'demo' ? 'demo request' : 'message'} passed validation. This preview site has no form backend connected, so nothing has been sent. Please
-                  email{' '}
-                  <a href={`mailto:${company.email}`} className="text-brass-300 underline underline-offset-4">
-                    {company.email}
-                  </a>{' '}
-                  to reach the team directly.
-                </p>
+                {sentVia === 'hubspot' ? (
+                  <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ivory-300">Your {type === 'demo' ? 'demo request' : 'message'} has been received. We’ll reply by email.</p>
+                ) : (
+                  <>
+                    <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ivory-300">This site has no form backend configured yet, so your {type === 'demo' ? 'request' : 'message'} was saved in this browser only. To send it, open it as an email:</p>
+                    <a href={mailto} className="mt-5 inline-flex items-center gap-2 rounded-full bg-brass-400 px-5 py-2.5 text-sm font-medium text-ink-950 hover:bg-brass-300"><Mail className="h-4 w-4" aria-hidden="true" /> Email {company.email}</a>
+                  </>
+                )}
                 <Button
                   variant="secondary"
                   className="mt-8"
@@ -141,7 +172,7 @@ export default function Contact() {
                 </Button>
               </div>
             ) : (
-              <form noValidate onSubmit={onSubmit} className="space-y-5">
+              <form noValidate onSubmit={onSubmit} className="relative space-y-5">
                 {status === 'error' && (
                   <ErrorNotice title="We couldn’t send that just now." body="Check your connection and try again. Your answers are still here." />
                 )}
@@ -196,8 +227,22 @@ export default function Contact() {
                 >
                   <textarea {...inputProps('message')} rows={5} placeholder={type === 'demo' ? 'We open in February and expect heavy rewrites in week two…' : 'How can we help?'} />
                 </Field>
+                <div className="absolute -left-[10000px] h-px w-px overflow-hidden" aria-hidden="true">
+                  <label>Leave this field empty<input tabIndex={-1} autoComplete="off" value={honeypot} onChange={(e) => setHoneypot(e.target.value)} /></label>
+                </div>
+                <div className="space-y-2 text-sm text-ivory-300">
+                  <label className="flex items-start gap-2">
+                    <input id="f-consent" type="checkbox" className="mt-0.5 h-4 w-4 accent-brass-400" checked={consent} onChange={(e) => { setConsent(e.target.checked); if (e.target.checked) setConsentError('') }} aria-invalid={consentError ? true : undefined} aria-describedby={consentError ? 'f-consent-error' : undefined} />
+                    <span>I agree that Stagewoven may contact me about this request. <span className="text-curtain-300">*</span></span>
+                  </label>
+                  {consentError && <p id="f-consent-error" className="text-xs text-curtain-300">{consentError}</p>}
+                  <label className="flex items-start gap-2">
+                    <input type="checkbox" className="mt-0.5 h-4 w-4 accent-brass-400" checked={marketing} onChange={(e) => setMarketing(e.target.checked)} />
+                    <span>Also send me occasional product updates (optional).</span>
+                  </label>
+                </div>
                 <div className="flex flex-col-reverse items-start justify-between gap-4 pt-2 sm:flex-row sm:items-center">
-                  <p className="text-xs text-ivory-500">We only use these details to reply to you.</p>
+                  <p className="text-xs text-ivory-500">{hubspot ? 'Submitting sends these details to Stagewoven’s customer-relationship system so we can reply.' : 'No form backend is configured: your message is saved in this browser and offered as an email.'} See the <a href="/privacy" className="underline">privacy notice</a>.</p>
                   <Button type="submit" size="lg" disabled={status === 'submitting'}>
                     {status === 'submitting' ? (
                       <>
@@ -222,8 +267,15 @@ export default function Contact() {
               </a>
             </div>
             <div>
-              <p className="eyebrow !text-ivory-500">Founder</p>
-              <p className="mt-3 text-ivory-100">{company.founder}</p>
+              <p className="eyebrow !text-ivory-500">Founders</p>
+              <ul className="mt-3 space-y-3">
+                {FOUNDERS.map((f) => (
+                  <li key={f.name} className="flex items-center gap-3">
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full border border-brass-400/30 font-mono text-xs text-brass-300">{f.initials}</span>
+                    <span><span className="block text-ivory-100">{f.name}</span><span className="block text-xs text-ivory-500">{f.role}</span></span>
+                  </li>
+                ))}
+              </ul>
             </div>
             <div className="rounded-xl border hairline bg-ink-900/60 p-6 text-sm leading-relaxed text-ivory-400">
               <p className="font-medium text-ivory-100">In tech week?</p>
