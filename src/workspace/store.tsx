@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react'
 import type { Activity, Cue, CueStatus, Priority, ReviewItem } from './types'
 import type { CueFinding } from './compare'
 import { describeLine } from './compare'
 import { revisions, seedCues, seedReviews, team } from './seed'
+import { can as roleCan, roleOf, type Action as Perm, type AuditEntry, type DemoRole } from './access'
 
 const STORAGE_KEY = 'stagewoven-demo-v1'
 
@@ -12,6 +13,10 @@ export type WorkspaceState = {
   comparedAt?: string
   activity: Activity[]
   persist: boolean
+  /** Acting demo user (a team member id). */
+  userId: string
+  /** Append-only record of changes made in this browser. */
+  audit: AuditEntry[]
 }
 
 type Action =
@@ -26,8 +31,35 @@ type Action =
   | { type: 'REOPEN'; reviewId: string }
   | { type: 'SET_PERSIST'; persist: boolean }
   | { type: 'RESET' }
+  | { type: 'SET_USER'; userId: string }
+  | { type: 'AUDIT'; entry: AuditEntry }
 
-const ME = 'Ama Osei'
+/** Which permission each action needs. Preferences, switching user and resetting this browser are open to everyone. */
+export function permissionFor(action: Action): Perm | null {
+  switch (action.type) {
+    case 'RUN_COMPARISON':
+      return 'compare'
+    case 'SAVE_CUE':
+    case 'SET_CUE_STATUS':
+      return 'cues'
+    case 'FLAG_CUE':
+      return 'flag'
+    case 'ASSIGN':
+      return 'assign'
+    case 'APPLY_SUGGESTION':
+      return 'apply'
+    case 'MARK_REVIEWED':
+    case 'REOPEN':
+      return 'review'
+    case 'APPROVE':
+      return 'approve'
+    default:
+      return null
+  }
+}
+
+/** Name of the acting user, used in activity messages. */
+const meOf = (state: WorkspaceState) => team.find((t) => t.id === state.userId)?.name ?? 'Ama Osei'
 const now = () => new Date().toISOString()
 let counter = 0
 const uid = (prefix: string) => `${prefix}-${Date.now().toString(36)}${(counter++).toString(36)}`
@@ -38,6 +70,8 @@ function initialState(persist = true): WorkspaceState {
     reviews: seedReviews,
     activity: [{ id: 'a0', at: '2026-10-26T09:05:00', text: 'Tomás Varga flagged SND-024 for a fade-time check.' }],
     persist,
+    userId: 'ama',
+    audit: [],
   }
 }
 
@@ -46,12 +80,38 @@ function load(): WorkspaceState {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw) as WorkspaceState
-      if (Array.isArray(parsed.cues) && Array.isArray(parsed.reviews)) return parsed
+      if (Array.isArray(parsed.cues) && Array.isArray(parsed.reviews))
+        return { ...parsed, userId: team.some((t) => t.id === parsed.userId) ? parsed.userId : 'ama', audit: Array.isArray(parsed.audit) ? parsed.audit : [] }
     }
   } catch {
     /* storage unavailable or corrupt: fall back to seed data */
   }
   return initialState()
+}
+
+function describe(action: Action): string {
+  switch (action.type) {
+    case 'RUN_COMPARISON':
+      return `Compared script revisions — ${action.findings.length} finding(s).`
+    case 'SAVE_CUE':
+      return `${action.cue.id}: ${action.isNew ? 'added' : 'edited'}.`
+    case 'SET_CUE_STATUS':
+      return `${action.cueId}: status set to ${action.status}.`
+    case 'FLAG_CUE':
+      return `${action.cueId}: flagged for review (${action.priority}).`
+    case 'ASSIGN':
+      return `Review ${action.reviewId}: assigned to ${team.find((t) => t.id === action.assigneeId)?.name ?? action.assigneeId}.`
+    case 'APPLY_SUGGESTION':
+      return `Review ${action.reviewId}: cue moved to the suggested trigger.`
+    case 'MARK_REVIEWED':
+      return `Review ${action.reviewId}: marked as reviewed.`
+    case 'APPROVE':
+      return `Review ${action.reviewId}: revised cue approved.`
+    case 'REOPEN':
+      return `Review ${action.reviewId}: reopened.`
+    default:
+      return action.type
+  }
 }
 
 function log(state: WorkspaceState, text: string): Activity[] {
@@ -98,25 +158,25 @@ function reducer(state: WorkspaceState, action: Action): WorkspaceState {
       }
     }
     case 'SAVE_CUE': {
-      const cue = { ...action.cue, updatedAt: now(), updatedBy: ME }
+      const cue = { ...action.cue, updatedAt: now(), updatedBy: meOf(state) }
       const cues = action.isNew ? [...state.cues, cue] : state.cues.map((c) => (c.id === cue.id ? cue : c))
-      return { ...state, cues, activity: log(state, `${ME} ${action.isNew ? 'added' : 'edited'} ${cue.id}.`) }
+      return { ...state, cues, activity: log(state, `${meOf(state)} ${action.isNew ? 'added' : 'edited'} ${cue.id}.`) }
     }
     case 'SET_CUE_STATUS':
       return {
         ...state,
-        cues: state.cues.map((c) => (c.id === action.cueId ? { ...c, status: action.status, updatedAt: now(), updatedBy: ME } : c)),
-        activity: log(state, `${ME} set ${action.cueId} to ${action.status}.`),
+        cues: state.cues.map((c) => (c.id === action.cueId ? { ...c, status: action.status, updatedAt: now(), updatedBy: meOf(state) } : c)),
+        activity: log(state, `${meOf(state)} set ${action.cueId} to ${action.status}.`),
       }
     case 'FLAG_CUE':
       return {
         ...state,
-        cues: state.cues.map((c) => (c.id === action.cueId ? { ...c, status: 'Needs Review', updatedAt: now(), updatedBy: ME } : c)),
+        cues: state.cues.map((c) => (c.id === action.cueId ? { ...c, status: 'Needs Review', updatedAt: now(), updatedBy: meOf(state) } : c)),
         reviews: [
           { id: uid('RV'), cueId: action.cueId, priority: action.priority, status: 'Open', source: 'Manual flag', reason: action.reason, createdAt: now() },
           ...state.reviews,
         ],
-        activity: log(state, `${ME} flagged ${action.cueId} for review.`),
+        activity: log(state, `${meOf(state)} flagged ${action.cueId} for review.`),
       }
     case 'ASSIGN': {
       const member = team.find((m) => m.id === action.assigneeId)
@@ -126,7 +186,7 @@ function reducer(state: WorkspaceState, action: Action): WorkspaceState {
         reviews: state.reviews.map((r) =>
           r.id === action.reviewId ? { ...r, assigneeId: action.assigneeId, status: r.status === 'Resolved' ? r.status : 'In Review' } : r,
         ),
-        activity: log(state, `${ME} assigned the ${review?.cueId} review to ${member?.name ?? 'a team member'}.`),
+        activity: log(state, `${meOf(state)} assigned the ${review?.cueId} review to ${member?.name ?? 'a team member'}.`),
       }
     }
     case 'APPLY_SUGGESTION': {
@@ -137,10 +197,10 @@ function reducer(state: WorkspaceState, action: Action): WorkspaceState {
         ...state,
         cues: state.cues.map((c) =>
           c.id === review.cueId
-            ? { ...c, lineRef: line.id, triggerType: line.kind === 'dialogue' ? 'Line' : 'Action', trigger: describeLine(line), updatedAt: now(), updatedBy: ME }
+            ? { ...c, lineRef: line.id, triggerType: line.kind === 'dialogue' ? 'Line' : 'Action', trigger: describeLine(line), updatedAt: now(), updatedBy: meOf(state) }
             : c,
         ),
-        activity: log(state, `${ME} moved ${review.cueId} to the suggested trigger at ${line.id}.`),
+        activity: log(state, `${meOf(state)} moved ${review.cueId} to the suggested trigger at ${line.id}.`),
       }
     }
     case 'MARK_REVIEWED':
@@ -148,12 +208,12 @@ function reducer(state: WorkspaceState, action: Action): WorkspaceState {
       const review = state.reviews.find((r) => r.id === action.reviewId)
       if (!review) return state
       const status: CueStatus = action.type === 'APPROVE' ? 'Approved' : 'Reviewed'
-      const resolution = action.type === 'APPROVE' ? `Revised cue approved by ${ME}.` : `Marked as reviewed by ${ME}; awaiting final approval.`
+      const resolution = action.type === 'APPROVE' ? `Revised cue approved by ${meOf(state)}.` : `Marked as reviewed by ${meOf(state)}; awaiting final approval.`
       return {
         ...state,
-        cues: state.cues.map((c) => (c.id === review.cueId ? { ...c, status, updatedAt: now(), updatedBy: ME } : c)),
+        cues: state.cues.map((c) => (c.id === review.cueId ? { ...c, status, updatedAt: now(), updatedBy: meOf(state) } : c)),
         reviews: state.reviews.map((r) => (r.id === review.id ? { ...r, status: 'Resolved', resolution } : r)),
-        activity: log(state, `${ME} ${action.type === 'APPROVE' ? 'approved the revised' : 'marked as reviewed'} ${review.cueId}.`),
+        activity: log(state, `${meOf(state)} ${action.type === 'APPROVE' ? 'approved the revised' : 'marked as reviewed'} ${review.cueId}.`),
       }
     }
     case 'REOPEN': {
@@ -161,23 +221,46 @@ function reducer(state: WorkspaceState, action: Action): WorkspaceState {
       if (!review) return state
       return {
         ...state,
-        cues: state.cues.map((c) => (c.id === review.cueId ? { ...c, status: 'Needs Review', updatedAt: now(), updatedBy: ME } : c)),
+        cues: state.cues.map((c) => (c.id === review.cueId ? { ...c, status: 'Needs Review', updatedAt: now(), updatedBy: meOf(state) } : c)),
         reviews: state.reviews.map((r) => (r.id === review.id ? { ...r, status: r.assigneeId ? 'In Review' : 'Open', resolution: undefined } : r)),
-        activity: log(state, `${ME} reopened the ${review.cueId} review.`),
+        activity: log(state, `${meOf(state)} reopened the ${review.cueId} review.`),
       }
     }
     case 'SET_PERSIST':
       return { ...state, persist: action.persist }
     case 'RESET':
-      return initialState(state.persist)
+      // Reset only clears this browser's demo data; keep the acting user.
+      return { ...initialState(state.persist), userId: state.userId }
+    case 'SET_USER':
+      return { ...state, userId: action.userId }
+    case 'AUDIT':
+      return { ...state, audit: [...state.audit, action.entry] }
   }
 }
 
-type Ctx = { state: WorkspaceState; dispatch: React.Dispatch<Action> }
+type Ctx = {
+  state: WorkspaceState
+  /** Permission-checked dispatch: refused actions are ignored (returns false); permitted changes are audited. */
+  dispatch: (action: Action) => boolean
+  role: DemoRole
+  can: (action: Perm) => boolean
+}
 const WorkspaceContext = createContext<Ctx | null>(null)
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(reducer, undefined, load)
+  const [state, rawDispatch] = useReducer(reducer, undefined, load)
+  const role = roleOf(state.userId)
+  const allowed = useCallback((a: Perm) => roleCan(role, a), [role])
+  const dispatch = useCallback(
+    (action: Action) => {
+      const need = permissionFor(action)
+      if (need && !allowed(need)) return false
+      rawDispatch(action)
+      if (need) rawDispatch({ type: 'AUDIT', entry: { id: uid('au'), at: now(), userId: state.userId, action: need, detail: describe(action) } })
+      return true
+    },
+    [allowed, state.userId],
+  )
 
   useEffect(() => {
     try {
@@ -188,7 +271,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
   }, [state])
 
-  const value = useMemo(() => ({ state, dispatch }), [state])
+  const value = useMemo(() => ({ state, dispatch, role, can: allowed }), [state, dispatch, role, allowed])
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>
 }
 

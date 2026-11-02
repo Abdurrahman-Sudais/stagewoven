@@ -40,11 +40,11 @@ export function SectionHeader({
 }) {
   return (
     <div className={cn('max-w-2xl', align === 'center' && 'mx-auto text-center', className)}>
-      {eyebrow && <p className="eyebrow mb-4">{eyebrow}</p>}
-      <h2 id={id} className="font-serif text-[2.1rem] leading-[1.08] font-light tracking-tight text-ivory-50 sm:text-5xl">
+      {eyebrow && <p className={cn('eyebrow reveal mb-4 flex items-center gap-2', align === 'center' && 'justify-center')}><span className="h-px w-6 bg-brass-400/70" aria-hidden="true" />{eyebrow}</p>}
+      <h2 id={id} className="reveal font-serif text-[2.1rem] leading-[1.08] font-light tracking-tight text-ivory-50 [--d:60ms] sm:text-5xl">
         {title}
       </h2>
-      {intro && <p className="mt-5 text-base leading-relaxed text-ivory-300 sm:text-lg">{intro}</p>}
+      {intro && <p className="reveal mt-5 text-base leading-relaxed text-ivory-300 [--d:120ms] sm:text-lg">{intro}</p>}
     </div>
   )
 }

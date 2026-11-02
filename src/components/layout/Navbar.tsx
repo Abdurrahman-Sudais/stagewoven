@@ -50,8 +50,8 @@ export function Navbar() {
                 to={item.to}
                 className={({ isActive }) =>
                   cn(
-                    'rounded-full px-3.5 py-2 text-[0.85rem] transition-colors',
-                    isActive ? 'text-ivory-50' : 'text-ivory-300 hover:text-ivory-50',
+                    'relative rounded-full px-3.5 py-2 text-[0.85rem] transition-colors after:absolute after:inset-x-3.5 after:bottom-1 after:h-px after:origin-left after:bg-brass-400 after:transition-transform',
+                    isActive && !item.to.includes('#') ? 'text-ivory-50 after:scale-x-100' : 'text-ivory-300 after:scale-x-0 hover:text-ivory-50 hover:after:scale-x-100',
                   )
                 }
               >
@@ -61,9 +61,12 @@ export function Navbar() {
           ))}
         </ul>
 
-        <div className="hidden lg:block">
-          <ButtonLink to="/workspace" size="sm" className="h-9 px-4">
-            Explore the Workspace <ArrowRight className="h-3.5 w-3.5" />
+        <div className="hidden items-center gap-2 lg:flex">
+          <Link to="/workspace" className="rounded-full px-3 py-2 text-[0.85rem] text-ivory-300 hover:text-ivory-50">
+            Live demo
+          </Link>
+          <ButtonLink to="/contact?type=demo" size="sm" className="h-9 px-4">
+            Request early access <ArrowRight className="h-3.5 w-3.5" />
           </ButtonLink>
         </div>
 
@@ -99,9 +102,12 @@ export function Navbar() {
               </li>
             ))}
           </ul>
-          <div className="px-5">
-            <ButtonLink to="/workspace" size="lg" className="w-full">
-              Explore the Workspace <ArrowRight className="h-4 w-4" />
+          <div className="space-y-3 px-5">
+            <ButtonLink to="/contact?type=demo" size="lg" className="w-full">
+              Request early access <ArrowRight className="h-4 w-4" />
+            </ButtonLink>
+            <ButtonLink to="/workspace" variant="secondary" size="lg" className="w-full">
+              Explore the live demo
             </ButtonLink>
           </div>
         </div>

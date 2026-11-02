@@ -13,7 +13,7 @@ const triggerTypes: TriggerType[] = ['Line', 'Action', 'Visual', 'Follow']
 const currentLines = revisions[revisions.length - 1].lines
 
 export function CueEditorModal({ cue, onClose, onSaved }: { cue?: Cue; onClose: () => void; onSaved: (msg: string) => void }) {
-  const { state, dispatch } = useWorkspace()
+  const { state, dispatch, can } = useWorkspace()
   const isNew = !cue
   const [draft, setDraft] = useState<Cue>(
     () =>
@@ -210,7 +210,7 @@ export function CueEditorModal({ cue, onClose, onSaved }: { cue?: Cue; onClose: 
             <Button variant="ghost" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit">{isNew ? 'Add cue' : 'Save changes'}</Button>
+            <Button type="submit" disabled={!can('cues')}>{isNew ? 'Add cue' : 'Save changes'}</Button>
           </div>
         </form>
       </div>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Mail } from 'lucide-react'
-import { company, footerNav } from '../../data/site'
+import { FOUNDERS, company, footerNav } from '../../data/site'
 import { Container } from '../ui/Section'
 import { Logo } from '../ui/Logo'
 
@@ -21,8 +21,11 @@ export function Footer() {
             >
               <Mail className="h-4 w-4" /> {company.email}
             </a>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-full border hairline px-3 py-1.5 text-xs text-ivory-300">
+              <span className="live-dot" aria-hidden="true" /> Early access open · pilots on one production
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-10 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-10 sm:grid-cols-4">
             {footerNav.map((group) => (
               <nav key={group.heading} aria-label={group.heading}>
                 <h2 className="eyebrow !text-ivory-500">{group.heading}</h2>
@@ -41,7 +44,13 @@ export function Footer() {
         </div>
         <div className="mt-16 flex flex-col gap-3 border-t hairline pt-8 text-xs text-ivory-500 sm:flex-row sm:items-center sm:justify-between">
           <p>
-            © {new Date().getFullYear()} {company.name} · {company.domain}
+            © {new Date().getFullYear()} {company.name} · Founded by{' '}
+            {FOUNDERS.map((f, i) => (
+              <span key={f.name}>
+                {i > 0 && ' & '}
+                <Link to="/about#team" className="text-ivory-300 hover:text-ivory-50">{f.name}</Link>
+              </span>
+            ))}
           </p>
           <p>Stagewoven plans and documents cues. It does not control lighting desks, sound consoles or show equipment.</p>
         </div>

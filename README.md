@@ -5,14 +5,33 @@
 Marketing website and interactive product demonstration for Stagewoven, an AI-assisted production cue planning platform for theatre companies, touring productions and live-event teams.
 
 - Domain: stagewoven.top
-- Founder: Salim Abdulrahman
+- Founder/CEO: Salim Abdulrahman
+- Co-founder/CTO: Yusuf Abdulhamid
 - Contact: nneka@stagewoven.top
 
 ## Stack
 
 Vite · React 19 · TypeScript · Tailwind CSS v4 · React Router · Lucide React · Recharts (one chart in the workspace overview).
 
-No API keys or backend are required. The demo runs entirely on local mock data and browser state.
+No API keys or backend are required. The demo runs entirely on local mock data and browser state. `npm test` runs the Vitest unit tests (roles, assistant, home content).
+
+## Deploying
+
+`npm run build` produces a static site in `dist/`. `public/_redirects` + `public/_headers` (Netlify / Cloudflare Pages) and `vercel.json` (Vercel) set the SPA fallback, security headers and long-lived caching for hashed assets. Every route except the home page is lazy-loaded.
+
+Optional: copy `.env.example` to `.env.local` and set the `VITE_HUBSPOT_*` variables so contact and early-access requests reach HubSpot. Without them the form saves messages in the visitor's browser and offers a pre-filled email.
+
+## What's new in this version
+
+- Home page: problem section with sourced statistics, what we solve, comparison, AI section, safeguards, AWS architecture, pricing, roadmap, founders, FAQ and early access, with scroll reveals, count-ups, floating cards and a sweeping spotlight (reduced-motion safe).
+- New pages: `/technology`, `/security`, `/privacy`, `/terms`.
+- Workspace: “Demo as” switcher with roles for the production team; every change is permission-checked and written to an audit log at `/workspace/audit`. “Ask about this production” on the overview answers from the cue sheets and review queue, cites records and refuses creative or show-control decisions.
+
+### Content to confirm before launch
+
+- **Founders:** `FOUNDERS` in `src/data/site.ts`. The contact email is `nneka@stagewoven.top` while the founder is Salim Abdulrahman — confirm the address.
+- **Industry statistics** (`PROBLEM_STATS` in `src/pages/Home.tsx`) cite Theatrecrafts and The Broadway League. Check each against its source.
+- **Roadmap, pricing, FAQ, privacy notice and terms** are drafts to keep in step with what you offer.
 
 ## Getting started
 

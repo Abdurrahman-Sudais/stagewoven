@@ -1,3 +1,4 @@
+import { AssistantPanel } from '../AssistantPanel'
 import { Link } from 'react-router-dom'
 import { ArrowRight, CalendarDays, CheckCircle2, ClipboardList, GitCompareArrows, ListChecks } from 'lucide-react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
@@ -31,6 +32,7 @@ export default function Overview() {
   return (
     <>
       <ViewHeader title="Overview" description={`${production.company} · ${production.venue} · ${production.phase}`} />
+      <div className="mb-6"><AssistantPanel /></div>
 
       {!comparedAt && (
         <div className="mb-6 flex flex-col gap-4 rounded-xl border border-brass-400/25 bg-gradient-to-r from-brass-400/[0.08] to-transparent p-5 sm:flex-row sm:items-center sm:justify-between">
@@ -99,7 +101,7 @@ export default function Overview() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-          <table className="sr-only">
+          <table className="sr-only left-0 top-0">
             <caption>Cues by scene and department</caption>
             <thead>
               <tr>

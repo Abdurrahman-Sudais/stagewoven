@@ -21,7 +21,7 @@ function toCsv(cues: Cue[]) {
 }
 
 export default function CueSheets() {
-  const { state, dispatch } = useWorkspace()
+  const { state, dispatch, can } = useWorkspace()
   const { openEditor, toast } = useWorkspaceUi()
   const [params, setParams] = useSearchParams()
   const query = params.get('q') ?? ''
@@ -69,7 +69,7 @@ export default function CueSheets() {
             <Button variant="secondary" size="sm" onClick={exportCsv} disabled={!filtered.length || exporting}>
               <Download className="h-3.5 w-3.5" /> Export CSV
             </Button>
-            <Button size="sm" onClick={() => openEditor()}>
+            <Button size="sm" disabled={!can('cues')} onClick={() => openEditor()}>
               <Plus className="h-3.5 w-3.5" /> Add cue
             </Button>
           </>
@@ -213,8 +213,9 @@ export default function CueSheets() {
 }
 
 function StatusSelect({ cue, onChange }: { cue: Cue; onChange: (s: CueStatus) => void }) {
+  const { can } = useWorkspace()
   return (
-    <Select aria-label={`Status for ${cue.id}`} value={cue.status} onChange={(e) => onChange(e.target.value as CueStatus)} className="w-full md:w-36">
+    <Select aria-label={`Status for ${cue.id}`} disabled={!can('cues')} value={cue.status} onChange={(e) => onChange(e.target.value as CueStatus)} className="w-full md:w-36">
       {statuses.map((s) => (
         <option key={s}>{s}</option>
       ))}

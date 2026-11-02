@@ -1,6 +1,8 @@
 import { Component, useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom'
-import { ArrowLeft, ClipboardList, FileText, LayoutGrid, ListChecks, Menu, Plus, Settings, Theater, Users, X } from 'lucide-react'
+import { ArrowLeft, ClipboardList, FileText, LayoutGrid, ListChecks, Lock, Menu, Plus, Settings, Theater, Users, X } from 'lucide-react'
+import { ROLE_LABEL, roleOf } from './access'
+import Audit from './views/Audit'
 import { cn } from '../lib/cn'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
 import { Button, ButtonLink } from '../components/ui/Button'
@@ -29,6 +31,7 @@ const nav = [
   { to: '/workspace/cues', label: 'Cue Sheets', icon: ListChecks },
   { to: '/workspace/review', label: 'Review Queue', icon: ClipboardList, badge: true },
   { to: '/workspace/team', label: 'Team', icon: Users },
+  { to: '/workspace/audit', label: 'Audit & roles', icon: Lock },
   { to: '/workspace/settings', label: 'Settings', icon: Settings },
 ]
 
@@ -77,7 +80,7 @@ export default function WorkspaceApp() {
 }
 
 function Shell() {
-  const { state } = useWorkspace()
+  const { state, dispatch, can } = useWorkspace()
   const location = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
   const [editor, setEditor] = useState<{ open: boolean; cue?: Cue }>({ open: false })
@@ -94,7 +97,7 @@ function Shell() {
   const openEditor = useCallback((cue?: Cue) => setEditor({ open: true, cue }), [])
 
   const openReviews = state.reviews.filter((r) => r.status !== 'Resolved').length
-  const me = team[0]
+  const me = team.find((t) => t.id === state.userId) ?? team[0]
 
   const sidebar = (
     <div className="flex h-full flex-col">
@@ -144,12 +147,24 @@ function Shell() {
         <Link to="/" className="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-ivory-400 hover:text-ivory-100">
           <ArrowLeft className="h-3.5 w-3.5" /> Back to website
         </Link>
-        <div className="mt-1 flex items-center gap-2.5 px-3 py-2">
-          <Avatar initials={me.initials} />
-          <div className="min-w-0">
-            <p className="truncate text-xs text-ivory-100">{me.name}</p>
-            <p className="truncate text-[0.65rem] text-ivory-500">{me.role}</p>
-          </div>
+        <div className="mt-1 px-3 py-2">
+          <label htmlFor="demo-as" className="mb-1.5 flex items-center gap-2 text-[0.62rem] tracking-wider text-ivory-500 uppercase">
+            <Avatar initials={me.initials} />
+            Demo as
+          </label>
+          <select
+            id="demo-as"
+            aria-label="Demo as user"
+            className="h-9 w-full rounded-lg border border-ivory-50/10 bg-ink-900 px-2 text-[0.75rem] text-ivory-100 outline-none focus:border-brass-400/60"
+            value={me.id}
+            onChange={(e) => dispatch({ type: 'SET_USER', userId: e.target.value })}
+          >
+            {team.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name} · {ROLE_LABEL[roleOf(m.id)]}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
     </div>
@@ -184,7 +199,7 @@ function Shell() {
             <span className="hidden rounded-full border border-brass-400/25 bg-brass-400/[0.06] px-2.5 py-1 font-mono text-[0.62rem] tracking-wider text-brass-300 uppercase md:inline">
               Demo · sample data
             </span>
-            <Button size="sm" onClick={() => openEditor()} aria-label="Add cue">
+            <Button size="sm" disabled={!can('cues')} title={can('cues') ? undefined : 'Your role cannot add cues'} onClick={() => openEditor()} aria-label="Add cue">
               <Plus className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Add cue</span>
             </Button>
           </header>
@@ -198,6 +213,7 @@ function Shell() {
                 <Route path="cues" element={<CueSheets />} />
                 <Route path="review" element={<ReviewQueue />} />
                 <Route path="team" element={<Team />} />
+                <Route path="audit" element={<Audit />} />
                 <Route path="settings" element={<SettingsView />} />
                 <Route
                   path="*"
