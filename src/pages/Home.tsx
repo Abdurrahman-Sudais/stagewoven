@@ -1,5 +1,6 @@
 import { AlertTriangle, ArrowRight, Check, CheckCircle2, ExternalLink, FileStack, FileText, GitCompareArrows, ListChecks, MessagesSquare, Minus, Share2, Sparkles, Unlink, UserCheck, X } from 'lucide-react'
 import type { CSSProperties, ReactNode } from 'react'
+import { useEffect } from 'react'
 import { useCountUp, useCycle } from '../lib/motion'
 import { AiSection, FaqSection, PricingSection, RoadmapSection, SafeguardsSection, TeamSection, TechnologySection } from './HomeSections'
 import { useDocumentMeta } from '../lib/useDocumentMeta'
@@ -11,6 +12,9 @@ import { ChangeDetectionPreview } from '../components/marketing/ChangeDetectionP
 import { DashboardPreview } from '../components/marketing/DashboardPreview'
 import { CtaBand, FeatureCard, ProcessSteps } from '../components/marketing/Blocks'
 import { roles } from '../data/roles'
+import { PurposeTop, PurposeBottom } from '../purpose/Purpose'
+import { startMotion } from '../purpose/motion'
+import '../purpose/purpose.css'
 
 const fragments = [
   { icon: FileText, label: 'Rehearsal draft 4', note: 'Emailed Monday, 23:10' },
@@ -150,6 +154,10 @@ export default function Home() {
   useDocumentMeta('', 'Plan lighting, sound and scene-change cues in one workspace. When scripts and rehearsals change, Stagewoven helps your team find the cues that may need another look.', '/')
 
   const word = useCycle(OUTCOME_WORDS, 2400)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => startMotion({ hero: '', heroVisual: null, autoReveal: '' }))
+    return () => cancelAnimationFrame(id)
+  }, [])
   return (
     <>
       {/* Hero */}
@@ -191,6 +199,7 @@ export default function Home() {
         </Container>
       </section>
       <Marquee />
+      <PurposeTop />
 
       {/* A. Problem */}
       <Section id="problem" labelledBy="problem-title" className="border-t hairline">
@@ -335,6 +344,7 @@ export default function Home() {
       <CompareSection />
       <AiSection />
       <SafeguardsSection />
+      <PurposeBottom />
       <TechnologySection />
       <PricingSection />
       <RoadmapSection />
