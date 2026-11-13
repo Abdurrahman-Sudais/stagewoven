@@ -2,7 +2,7 @@ export const company = {
   name: 'Stagewoven',
   domain: 'stagewoven.top',
   url: 'https://stagewoven.top',
-  founder: 'Salim Abdulrahman',
+  founder: 'Nneka Abdulrahman',
   email: 'nneka@stagewoven.top',
   tagline: 'Every cue. Every change. In sync.',
   category: 'Theatre technology, live production software and AI-assisted production management',
@@ -20,10 +20,10 @@ export interface Person {
 /** The founding team, credited on the home page, About, Contact and in the footer. */
 export const FOUNDERS: Person[] = [
   {
-    name: 'Salim Abdulrahman',
-    initials: 'SA',
+    name: 'Nneka Abdulrahman',
+    initials: 'NA',
     role: 'Founder/CEO',
-    bio: 'Salim founded Stagewoven so production teams can keep every cue in step with a script that keeps changing — and leads product, customers and every pilot.',
+    bio: 'Nneka founded Stagewoven so production teams can keep every cue in step with a script that keeps changing — and leads product, customers and every pilot.',
     focus: ['Product', 'Productions', 'Pilots'],
   },
   {

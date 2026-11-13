@@ -11,7 +11,7 @@ describe('home content', () => {
     }
   })
   it('credits both founders with their roles', () => {
-    expect(FOUNDERS.map((f) => `${f.name} · ${f.role}`)).toEqual(['Salim Abdulrahman · Founder/CEO', 'Yusuf Abdulhamid · Co-founder/CTO'])
+    expect(FOUNDERS.map((f) => `${f.name} · ${f.role}`)).toEqual(['Nneka Abdulrahman · Founder/CEO', 'Yusuf Abdulhamid · Co-founder/CTO'])
   })
   it('never promises automatic cue changes or show control', () => {
     expect(FAQS[0]?.[1]).toMatch(/^No\./)

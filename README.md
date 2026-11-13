@@ -5,7 +5,7 @@
 Marketing website and interactive product demonstration for Stagewoven, an AI-assisted production cue planning platform for theatre companies, touring productions and live-event teams.
 
 - Domain: stagewoven.top
-- Founder/CEO: Salim Abdulrahman
+- Founder/CEO: Nneka Abdulrahman
 - Co-founder/CTO: Yusuf Abdulhamid
 - Contact: nneka@stagewoven.top
 
@@ -29,7 +29,7 @@ Optional: copy `.env.example` to `.env.local` and set the `VITE_HUBSPOT_*` varia
 
 ### Content to confirm before launch
 
-- **Founders:** `FOUNDERS` in `src/data/site.ts`. The contact email is `nneka@stagewoven.top` while the founder is Salim Abdulrahman — confirm the address.
+- **Founders:** `FOUNDERS` in `src/data/site.ts`. The contact email is `nneka@stagewoven.top`, matching the founder, Nneka Abdulrahman.
 - **Industry statistics** (`PROBLEM_STATS` in `src/pages/Home.tsx`) cite Theatrecrafts and The Broadway League. Check each against its source.
 - **Roadmap, pricing, FAQ, privacy notice and terms** are drafts to keep in step with what you offer.
 
